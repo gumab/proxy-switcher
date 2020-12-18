@@ -8,7 +8,7 @@ var server = http.createServer(function (req, res) {
   var urlObj = url.parse(req.url);
   var target = urlObj.protocol + "//" + urlObj.host;
 
-  console.log("Proxy HTTP request for:", target);
+  // console.log("Proxy HTTP request for:", target);
 
   var proxy = httpProxy.createProxyServer({});
   proxy.on("error", function (err, req, res) {
@@ -40,7 +40,7 @@ server.addListener('connect', function (req, socket, bodyhead) {
   var hostPort = getHostPortFromString(req.url, 443);
   var hostDomain = hostPort[0];
   var port = parseInt(hostPort[1]);
-  console.log("Proxying HTTPS request for:", hostDomain, port);
+  // console.log("Proxying HTTPS request for:", hostDomain, port);
 
   var proxySocket = new net.Socket();
   proxySocket.connect(port, hostDomain, function () {
