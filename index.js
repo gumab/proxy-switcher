@@ -101,7 +101,6 @@ const getStatus = () => {
 }
 
 
-const Telnet = require('telnet-client')
 let successCount = 0
 let errorCount = 0
 
