@@ -5,6 +5,7 @@ const proxyHost = "192.168.0.11";
 const proxyPort = 9090;
 const internetProxyHost = "localhost"
 const internetProxyPort = 8081
+const isPortReachable = require('is-port-reachable')
 
 const status = {
     host: proxyHost,
@@ -32,6 +33,38 @@ const stopProxy = () => {
 
 runProxy()
 
+const turnOffProxy = (callback) => {
+    if (!getStatus().isProxying) {
+        callback(getStatus())
+        return
+    }
+
+    stopProxy()
+    status.host = internetProxyHost
+    status.port = internetProxyPort
+
+    setTimeout(() => {
+        runProxy()
+        callback(getStatus())
+    }, 1000)
+}
+
+const turnOnProxy = (callback) => {
+    if (getStatus().isProxying) {
+        callback(getStatus())
+        return
+    }
+
+    stopProxy()
+    status.host = proxyHost
+    status.port = proxyPort
+
+    setTimeout(() => {
+        runProxy()
+        callback(getStatus())
+    }, 1000)
+}
+
 const app = express()
 
 app.set('views', path.join(__dirname, './client'))
@@ -45,25 +78,15 @@ app.get('/status', (req, res) => {
 })
 
 app.get('/on', (req, res) => {
-    stopProxy()
-    status.host = proxyHost
-    status.port = proxyPort
-
-    setTimeout(() => {
-        runProxy()
-        res.json(getStatus())
-    }, 1000)
+    turnOnProxy((status) => {
+        res.json(status)
+    })
 })
 
 app.get('/off', (req, res) => {
-    stopProxy()
-    status.host = internetProxyHost
-    status.port = internetProxyPort
-
-    setTimeout(() => {
-        runProxy()
-        res.json(getStatus())
-    }, 1000)
+    turnOffProxy((status) => {
+        res.json(status)
+    })
 })
 
 const server = app.listen(8080, () => {
@@ -76,3 +99,46 @@ const getStatus = () => {
         isProxying: status.host === proxyHost
     }
 }
+
+
+const Telnet = require('telnet-client')
+let successCount = 0
+let errorCount = 0
+
+async function checkConnection() {
+    if (await isPortReachable(9090, { host: '192.168.0.11', timeout: 500 })) {
+        if (successCount < 10)
+            successCount++
+        errorCount = 0
+    } else {
+        successCount = 0
+        if (errorCount < 10)
+            errorCount++
+    }
+    // console.log(errorCount, successCount)
+
+    if (errorCount > 5 && getStatus().isProxying) {
+        console.log('Proxy seems to have stopped. Stop proxing...')
+        turnOffProxy((status) => {
+            console.log(status)
+        })
+    } else if (successCount > 5 && !getStatus().isProxying) {
+        console.log('Proxy seems to have startted. Start proxing...')
+        turnOnProxy((status) => {
+            console.log(status)
+        })
+    }
+
+    //   let res = await connection.exec('uptime')
+    //   console.log('async result:', res)
+}
+
+function runChecker() {
+    checkConnection()
+    setTimeout(() => {
+        runChecker()
+    }, 1000)
+}
+
+
+runChecker()
