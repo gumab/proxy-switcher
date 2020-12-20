@@ -4,7 +4,7 @@ const path = require("path");
 const proxyHost = "192.168.0.11";
 const proxyPort = 9090;
 const internetProxyHost = "localhost"
-const internetProxyPort = 8081
+const internetProxyPort = 3128
 const isPortReachable = require('is-port-reachable')
 
 const status = {
@@ -12,9 +12,9 @@ const status = {
     port: proxyPort,
     isRunning: false
 }
-const internetGate = require('./internetGate')
+// const internetGate = require('./internetGate')
 
-internetGate.runServer()
+// internetGate.runServer()
 
 var proxyServer
 
